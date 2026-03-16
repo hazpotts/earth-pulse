@@ -257,7 +257,7 @@ export const SOURCES = {
     direction: 'down-good',
     source: 'OWID / UCDP',
     sourceUrl: 'https://ourworldindata.org/war-and-peace',
-    url: 'https://ourworldindata.org/grapher/battle-related-deaths.csv?v=1&csvType=full&useColumnShortNames=true',
+    url: 'https://ourworldindata.org/grapher/deaths-in-state-based-conflicts.csv?v=1&csvType=full&useColumnShortNames=true',
     proxy: true,
     transform: (csv) => {
       return csv
