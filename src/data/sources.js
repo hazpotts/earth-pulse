@@ -10,7 +10,7 @@
  */
 
 const PROXY_BASE = import.meta.env.PROD
-  ? 'https://earth-pulse-proxy.workers.dev'
+  ? 'https://earth-pulse-proxy.hazpotts.workers.dev'
   : 'http://localhost:8787';
 
 export const proxyUrl = (url) => `${PROXY_BASE}?url=${encodeURIComponent(url)}`;
