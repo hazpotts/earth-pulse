@@ -260,13 +260,33 @@ export const SOURCES = {
     url: 'https://ourworldindata.org/grapher/deaths-in-state-based-conflicts.csv?v=1&csvType=full&useColumnShortNames=true',
     proxy: true,
     transform: (csv) => {
-      return csv
-        .filter(r => r.entity === 'World' && r.year)
-        .map(r => {
-          const val = parseFloat(Object.values(r).find(v => !isNaN(v) && v !== r.year && v > 100) || 0);
-          return { year: +r.year, value: +(val / 1000).toFixed(1) };
-        })
-        .filter(r => r.year >= 2015 && r.value > 0);
+      if (!csv.length) return [];
+      const keys = Object.keys(csv[0]);
+      const metaCols = ['entity', 'year', 'code', 'Entity', 'Year', 'Code'];
+      const dataCol = keys.find(k => !metaCols.includes(k));
+      if (!dataCol) return [];
+
+      // Try World aggregate row first
+      const worldRows = csv.filter(r => (r.entity === 'World' || r.Entity === 'World') && (r.year || r.Year));
+      if (worldRows.length) {
+        return worldRows
+          .map(r => ({ year: +(r.year || r.Year), value: +(parseFloat(r[dataCol]) / 1000).toFixed(1) }))
+          .filter(r => r.year >= 2015 && !isNaN(r.value) && r.value > 0);
+      }
+
+      // No World row — aggregate all entities per year
+      const byYear = {};
+      csv.forEach(r => {
+        const year = +(r.year || r.Year);
+        if (year >= 2015 && year <= 2030) {
+          const v = parseFloat(r[dataCol]);
+          if (!isNaN(v) && v > 0) byYear[year] = (byYear[year] || 0) + v;
+        }
+      });
+      return Object.entries(byYear)
+        .map(([y, v]) => ({ year: +y, value: +(v / 1000).toFixed(1) }))
+        .filter(r => r.value > 0)
+        .sort((a, b) => a.year - b.year);
     },
   },
 
@@ -323,14 +343,20 @@ export const SOURCES = {
     url: 'https://ourworldindata.org/grapher/number-species-threatened.csv?v=1&csvType=full&useColumnShortNames=true',
     proxy: true,
     transform: (csv) => {
+      if (!csv.length) return [];
+      const keys = Object.keys(csv[0]);
+      const metaCols = ['entity', 'year', 'code', 'Entity', 'Year', 'Code'];
+      const dataCol = keys.find(k => !metaCols.includes(k));
+      if (!dataCol) return [];
+
       return csv
         .filter(r => (r.entity === 'World' || r.Entity === 'World') && (r.year || r.Year))
         .map(r => {
           const year = +(r.year || r.Year);
-          const vals = Object.values(r).map(Number).filter(v => !isNaN(v) && v > 1000);
-          return { year, value: vals.length ? vals[0] : null };
+          const value = parseFloat(r[dataCol]);
+          return { year, value: (!isNaN(value) && value > 0) ? Math.round(value) : null };
         })
-        .filter(r => r.year >= 2015 && r.value !== null);
+        .filter(r => r.year >= 2000 && r.value !== null);
     },
   },
 };
