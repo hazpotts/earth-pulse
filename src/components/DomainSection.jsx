@@ -23,11 +23,10 @@ export default function DomainSection({ domain }) {
       }}>
         <span style={{ fontSize: 'var(--text-xl)' }}>{info.icon}</span>
         <h2 style={{
-          fontFamily: 'var(--font-serif)',
+          fontFamily: 'var(--font-mono)',
           fontSize: 'var(--text-xl)',
           fontWeight: 400,
           color: info.colorHex,
-          fontStyle: 'italic',
         }}>
           {info.label}
         </h2>

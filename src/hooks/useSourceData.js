@@ -60,6 +60,15 @@ export function useSourceData(sourceKey) {
           console.warn(`Failed to load ${sourceKey}:`, err);
           setError(err.message);
           setLoading(false);
+          // Forward error to worker log endpoint
+          const logBase = import.meta.env.PROD
+            ? 'https://earth-pulse-proxy.workers.dev'
+            : 'http://localhost:8787';
+          fetch(`${logBase}/log`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ source: sourceKey, error: err.message, url: source.url }),
+          }).catch(() => {});
         }
       }
     };

@@ -102,7 +102,7 @@ export default function MetricCard({ sourceKey, delay = 0 }) {
 
       {/* Metric name */}
       <div style={{
-        fontFamily: 'var(--font-serif)',
+        fontFamily: 'var(--font-mono)',
         fontSize: 'var(--text-lg)',
         color: 'var(--text-primary)',
         lineHeight: 1.2,
@@ -143,11 +143,10 @@ export default function MetricCard({ sourceKey, delay = 0 }) {
         <>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 'var(--space-sm)' }}>
             <span style={{
-              fontFamily: 'var(--font-serif)',
+              fontFamily: 'var(--font-mono)',
               fontSize: 'var(--text-2xl)',
-              fontWeight: 400,
+              fontWeight: 300,
               color: 'var(--text-primary)',
-              fontStyle: 'italic',
             }}>
               {typeof latest?.value === 'number'
                 ? latest.value.toLocaleString()
