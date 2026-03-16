@@ -49,12 +49,11 @@ export default function Header() {
           </div>
 
           <h1 style={{
-            fontFamily: 'var(--font-serif)',
+            fontFamily: 'var(--font-mono)',
             fontSize: 'clamp(2rem, 5vw, var(--text-3xl))',
-            fontWeight: 400,
+            fontWeight: 300,
             color: 'var(--text-primary)',
             lineHeight: 1.1,
-            fontStyle: 'italic',
           }}>
             Earth Pulse
           </h1>

@@ -147,8 +147,8 @@ export const SOURCES = {
     direction: 'down-good',
     source: 'World Bank',
     sourceUrl: 'https://data.worldbank.org/indicator/SI.POV.GINI',
-    url: 'https://api.worldbank.org/v2/country/USA;CHN;IND;BRA;DEU/indicator/SI.POV.GINI?format=json&per_page=500&date=2010:2025&mrnev=3',
-    proxy: false,
+    url: 'https://api.worldbank.org/v2/country/USA;CHN;IND;BRA;DEU/indicator/SI.POV.GINI?format=json&per_page=500&date=2010:2025',
+    proxy: true,
     isJson: true,
     transform: (json) => {
       const data = json[1] || [];
@@ -233,7 +233,7 @@ export const SOURCES = {
     direction: 'up-bad',
     source: 'UNHCR',
     sourceUrl: 'https://www.unhcr.org/refugee-statistics/',
-    url: 'https://api.unhcr.org/population/v1/population/?yearFrom=2015&yearTo=2025&coo_all=true&coa_all=true&limit=20',
+    url: 'https://api.unhcr.org/population/v1/population/?yearFrom=2015&yearTo=2025&coa_all=true&limit=5000',
     proxy: false,
     isJson: true,
     transform: (json) => {
@@ -258,7 +258,7 @@ export const SOURCES = {
     source: 'OWID / UCDP',
     sourceUrl: 'https://ourworldindata.org/war-and-peace',
     url: 'https://ourworldindata.org/grapher/battle-related-deaths.csv?v=1&csvType=full&useColumnShortNames=true',
-    proxy: false,
+    proxy: true,
     transform: (csv) => {
       return csv
         .filter(r => r.entity === 'World' && r.year)
@@ -321,7 +321,7 @@ export const SOURCES = {
     source: 'OWID / IUCN',
     sourceUrl: 'https://ourworldindata.org/grapher/number-species-threatened',
     url: 'https://ourworldindata.org/grapher/number-species-threatened.csv?v=1&csvType=full&useColumnShortNames=true',
-    proxy: false,
+    proxy: true,
     transform: (csv) => {
       return csv
         .filter(r => (r.entity === 'World' || r.Entity === 'World') && (r.year || r.Year))
