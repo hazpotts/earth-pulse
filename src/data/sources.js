@@ -76,6 +76,12 @@ export const SOURCES = {
     sourceUrl: 'https://data.giss.nasa.gov/gistemp/',
     url: 'https://data.giss.nasa.gov/gistemp/graphs_v4/graph_data/Global_Mean_Estimates_based_on_Land_and_Ocean_Data/graph.csv',
     proxy: true,
+    // GISTEMP CSVs have a title line before the actual CSV header — skip to the Year line
+    preprocess: (text) => {
+      const lines = text.split('\n');
+      const idx = lines.findIndex(l => /^\s*Year\s*,/i.test(l));
+      return idx >= 0 ? lines.slice(idx).join('\n') : text;
+    },
     transform: (csv) => {
       return csv
         .filter(r => r.Year && r['No_Smoothing'])
@@ -173,14 +179,23 @@ export const SOURCES = {
     direction: 'up-good',
     source: 'WHO GHO',
     sourceUrl: 'https://www.who.int/data/gho',
-    url: 'https://ghoapi.azureedge.net/api/WHOSIS_000001?$filter=Dim1%20eq%20%27BTSX%27%20and%20SpatialDim%20eq%20%27GLOBAL%27',
+    // Note: WHOSIS_000001 at GLOBAL only has SEX_MLE / SEX_FMLE — no BTSX combined row.
+    // Fetch both sexes and average them per year.
+    url: 'https://ghoapi.azureedge.net/api/WHOSIS_000001?$filter=SpatialDim%20eq%20%27GLOBAL%27',
     proxy: true,
     isJson: true,
     transform: (json) => {
       const data = json.value || [];
-      return data
-        .filter(r => r.NumericValue && r.TimeDim)
-        .map(r => ({ year: +r.TimeDim, value: +parseFloat(r.NumericValue).toFixed(1) }))
+      // Average male + female life expectancy per year
+      const byYear = {};
+      data.filter(r => r.NumericValue && r.TimeDim).forEach(r => {
+        const year = +r.TimeDim;
+        if (!byYear[year]) byYear[year] = { sum: 0, count: 0 };
+        byYear[year].sum += parseFloat(r.NumericValue);
+        byYear[year].count += 1;
+      });
+      return Object.entries(byYear)
+        .map(([y, { sum, count }]) => ({ year: +y, value: +(sum / count).toFixed(1) }))
         .filter(r => r.year >= 2015)
         .sort((a, b) => a.year - b.year);
     },
@@ -238,11 +253,15 @@ export const SOURCES = {
     isJson: true,
     transform: (json) => {
       const items = json.items || [];
-      // Group by year, sum refugees + idps + stateless
+      // Group by year, sum refugees + idps + stateless.
+      // Use Number() to ensure numeric addition — API may return string values.
       const byYear = {};
       items.forEach(r => {
-        if (!byYear[r.year]) byYear[r.year] = 0;
-        byYear[r.year] += (r.refugees || 0) + (r.idps || 0) + (r.stateless || 0);
+        const year = +r.year;
+        if (!year) return;
+        const total = (Number(r.refugees) || 0) + (Number(r.idps) || 0) + (Number(r.stateless) || 0);
+        if (!isFinite(total)) return;
+        byYear[year] = (byYear[year] || 0) + total;
       });
       return Object.entries(byYear)
         .map(([y, v]) => ({ year: +y, value: +(v / 1_000_000).toFixed(1) }))
@@ -349,8 +368,12 @@ export const SOURCES = {
       const dataCol = keys.find(k => !metaCols.includes(k));
       if (!dataCol) return [];
 
+      // OWID threatened species dataset uses "All groups" as the global total entity
       return csv
-        .filter(r => (r.entity === 'World' || r.Entity === 'World') && (r.year || r.Year))
+        .filter(r => {
+          const entity = r.entity || r.Entity || '';
+          return (entity === 'All groups' || entity === 'World') && (r.year || r.Year);
+        })
         .map(r => {
           const year = +(r.year || r.Year);
           const value = parseFloat(r[dataCol]);

@@ -5,9 +5,33 @@ import { SOURCES, proxyUrl } from '../data/sources.js';
 const cache = new Map();
 const pending = new Map(); // deduplicates in-flight requests for the same key
 
+const STORAGE_PREFIX = 'ep_v1_';
+const STORAGE_TTL = 86_400_000; // 24 hours
+
+function readStorage(key) {
+  try {
+    const raw = localStorage.getItem(STORAGE_PREFIX + key);
+    if (!raw) return null;
+    const { data, ts } = JSON.parse(raw);
+    if (Date.now() - ts > STORAGE_TTL) { localStorage.removeItem(STORAGE_PREFIX + key); return null; }
+    return data;
+  } catch { return null; }
+}
+
+function writeStorage(key, data) {
+  try { localStorage.setItem(STORAGE_PREFIX + key, JSON.stringify({ data, ts: Date.now() })); } catch { /* quota exceeded etc */ }
+}
+
 async function loadSource(sourceKey) {
   if (cache.has(sourceKey)) return cache.get(sourceKey);
   if (pending.has(sourceKey)) return pending.get(sourceKey);
+
+  // Check localStorage before hitting the network
+  const stored = readStorage(sourceKey);
+  if (stored) {
+    cache.set(sourceKey, stored);
+    return stored;
+  }
 
   const source = SOURCES[sourceKey];
   const url = source.proxy ? proxyUrl(source.url) : source.url;
@@ -21,13 +45,21 @@ async function loadSource(sourceKey) {
       parsed = await res.json();
     } else {
       const text = await res.text();
-      const cleaned = text.split('\n').filter(line => !line.startsWith('#')).join('\n');
-      const result = Papa.parse(cleaned, { header: true, skipEmptyLines: true, dynamicTyping: false });
+      let cleaned = text.split('\n').filter(line => !line.startsWith('#')).join('\n');
+      // Allow sources to preprocess CSV text (e.g. skip non-CSV header lines)
+      if (source.preprocess) cleaned = source.preprocess(cleaned);
+      const result = Papa.parse(cleaned, {
+        header: true,
+        skipEmptyLines: true,
+        dynamicTyping: false,
+        transformHeader: h => h.trim(),
+      });
       parsed = result.data;
     }
 
     const transformed = source.transform(parsed);
     cache.set(sourceKey, transformed);
+    writeStorage(sourceKey, transformed);
     pending.delete(sourceKey);
     return transformed;
   })().catch(err => {
