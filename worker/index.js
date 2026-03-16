@@ -83,9 +83,9 @@ export default {
       ));
     }
 
-    // Check cache first
+    // Normalize cache key to URL only (exclude request-specific headers)
     const cache = caches.default;
-    const cacheKey = new Request(target, request);
+    const cacheKey = new Request(target, { method: 'GET' });
     let response = await cache.match(cacheKey);
 
     if (!response) {
@@ -110,10 +110,11 @@ export default {
         ));
       }
 
-      // Clone and cache
+      // Clone and cache with explicit TTL; strip Vary to enable browser HTTP caching
       const ttl = CACHE_TTL[targetUrl.hostname] || 3600;
       response = new Response(response.body, response);
       response.headers.set('Cache-Control', `public, max-age=${ttl}`);
+      response.headers.delete('Vary');
       ctx.waitUntil(cache.put(cacheKey, response.clone()));
     }
 
