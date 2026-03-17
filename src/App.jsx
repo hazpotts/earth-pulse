@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import Header from './components/Header.jsx';
 import DomainNav from './components/DomainNav.jsx';
+import HealthIndex from './components/HealthIndex.jsx';
 import DomainSection from './components/DomainSection.jsx';
 import Footer from './components/Footer.jsx';
 import { DOMAINS } from './data/sources.js';
@@ -25,6 +26,8 @@ export default function App() {
     }}>
       <Header />
       <DomainNav active={activeDomain} onSelect={setActiveDomain} />
+
+      <HealthIndex />
 
       <main style={{ flex: 1 }}>
         {visibleDomains.map(domain => (
