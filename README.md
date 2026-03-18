@@ -1,5 +1,7 @@
 # 🌍 Earth Pulse
 
+[https://earth-pulse.pages.dev/](https://earth-pulse.pages.dev/)
+
 A live global issues tracker pulling from regularly-updated open data sources. Tracks climate, poverty, health, conflict, and biodiversity metrics with interactive time-series charts.
 
 ## Architecture
